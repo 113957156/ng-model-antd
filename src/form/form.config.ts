@@ -27,14 +27,16 @@ export class NgdsFormUploaderConfig {
 }
 
 export class NgdsFormOption {
+	id?:string;
 	labelSpan?: number;
 	compSpan?: number;
 	gutter?: number;
-	components: Array<Array<NgdsFormCompOption | NgdsFormInputCompOption | NgdsFormInputListCompOption | NgdsFormSelectCompOption | NgdsFormTextareaCompOption | NgdsFormInputRangeCompOption | NgdsFormRadioCompOption | NgdsFormUploaderCompOption | NgdsFormUmeditorCompOption>>;
+	components: Array<Array<NgdsFormCompOption | NgdsFormInputCompOption | NgdsFormInputListCompOption | NgdsFormSelectCompOption | NgdsFormTextareaCompOption | NgdsFormInputRangeCompOption | NgdsFormRadioCompOption | NgdsFormUploaderCompOption | NgdsFormUmeditorCompOption | NgdsFormCheckboxGroupCompOption | NgdsFormDatePickerCompOption | NgdsFormCheckboxCompOption>>;
 	value?: any;
-	showSearch?: boolean;	
-	search?:NgdsFormSearchOption;
-	column?: number;//最大列数量	
+	showSearch?: boolean;
+	search?: NgdsFormSearchOption;
+	column?: number;//最大列数量
+	remember?:boolean;
 }
 
 
@@ -44,7 +46,7 @@ export class NgdsFormCompOption {
 	comp: any;
 	label: string;
 	property: string;
-	property2?: string;	
+	property2?: string;
 	value?: any;
 	span?: number;//组件span
 	labelSpan?: number;//组件标签span
@@ -54,6 +56,9 @@ export class NgdsFormCompOption {
 	onChange?: onChangeFunc;
 	hidden?: boolean;
 	formComp?: NgdsForm;
+	disabled?: boolean;
+	formOption?: NgdsFormOption;
+	attrId?: string;
 }
 
 export class NgdsFormValidationOption {
@@ -63,13 +68,14 @@ export class NgdsFormValidationOption {
 	fn: ValidatorFn;
 }
 export class NgdsFormSearchOption extends NgdsFormCompOption {
-	offset?:number;
+	offset?: number;
 	hideReset?: boolean;
 }
 
 export class NgdsFormInputCompOption extends NgdsFormCompOption {
 	type: 'text' | 'password';
-	placeHolder?:string;
+	placeHolder?: string;
+	maxLength?: number;
 }
 
 export class NgdsFormInputRangeCompOption extends NgdsFormCompOption {
@@ -104,6 +110,8 @@ export class NgdsFormCascaderCompOption extends NgdsFormCompOption {
 
 export class NgdsFormCheckboxCompOption extends NgdsFormCompOption {
 	dataSource: NgdsDataSource;
+	data: Array<any>;
+	showAllChecked?: boolean;
 	dsLabel?: string;
 	dsValue?: string;
 }
@@ -121,16 +129,19 @@ export class NgdsFormSelectCompOption extends NgdsFormCompOption {
 	dsValue?: string;
 	model?: string;
 	placeHolder?: string;
+	searchRemote?: boolean;
 }
 
 export class NgdsFormDatePickerCompOption extends NgdsFormCompOption {
+	showTime?: boolean;
+	format?: string;
 }
 
 export class NgdsFormUmeditorCompOption extends NgdsFormCompOption {
 	config?: any; //umeditor配置项
 	path?: string;//umeditor代码根目录路径，以 / 结尾
 	loadingTip?: string;//初始化提示文本
-	setting?:any;
+	setting?: any;
 }
 
 export type errHandlerFunc = (err: any) => void;
@@ -141,6 +152,9 @@ export class NgdsFormUploaderCompOption extends NgdsFormCompOption {
 	limit?: number;
 	uploaderId?: string;//默认picker
 	errHandler?: errHandlerFunc;//错误处理
+	width?: number;
+	height?: number;
+	compress?: any;
 }
 
 

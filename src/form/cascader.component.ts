@@ -26,7 +26,7 @@ import { NgdsFormComp } from './form.component';
             [nzValueProperty]="option.dsValue"
             [nzLabelProperty]="option.dsLabel"
             [(ngModel)]="option.value"
-            (nzSelectionChange)="onChange($event)"
+            (nzSelectionChange)="setValue($event);onChange()"
             (nzLoad)="loadData($event)"
             [formControl]="getFormControl(option.property)">
             
@@ -47,9 +47,16 @@ export class NgdsFormCascader extends NgdsFormComp implements AfterContentChecke
   }
 
   option: NgdsFormCascaderCompOption;
+  oldValue: any;
 
-  onChange(value: any) {
+  setValue(value: any) {
+    if (this.oldValue == undefined) {
+      this.oldValue = value || null;
+    }
     this.option.value = value;
+  }
+
+  onChange() {
     this.option.onChange && this.option.onChange(this.option);
   }
 
@@ -69,29 +76,63 @@ export class NgdsFormCascader extends NgdsFormComp implements AfterContentChecke
     if (e.option) {
       e.option.loading = true;
     }
-    this.option.dataSource.getData({ "index": e.index,"parentId":e.option?e.option[this.option.dsValue]:0 }).then((value: any) => {
+    if (Array.isArray(this.option.dataSource)) {
       if (e.option) {
         e.option.loading = false;
       }
-      e.resolve(value.data);
-    })
+      e.resolve(this.option.dataSource);
+    } else {
+      this.option.dataSource.getData({ "index": e.index, "parentId": e.option ? e.option[this.option.dsValue] : 0 }).then((value: any) => {
+        if (e.option) {
+          e.option.loading = false;
+        }
+        e.resolve(value.data);
+      })
+    }
   }
 
   setCompValue(formValue: any, compKey: string, compValue: any): void {
+    let valueArray: Array<any> = [];
     if (this.option.value && this.option.value.length) {
-      let valueArray:Array<any> = [];
-      for(let v of this.option.value){
-        delete v.children;
-        delete v.loading;
-        delete v.isLeaf;
-        delete v.parent;
+      for (let v of this.option.value) {
+        let obj = Object.assign({},v);
+        delete obj.children;
+        delete obj.loading;
+        delete obj.isLeaf;
+        delete obj.parent;
+        valueArray.push(obj);
       }
     }
-    formValue[this.option.property] = this.option.value;
+    formValue[this.option.property] = valueArray;
   }
 
   getFormControl(name: string): any {
     return this.option.formGroup.controls[name];
   }
 
+  getChangeValue(): any {
+    if (this.oldValue || this.option.value) {
+      if (this.oldValue && this.option.value) {
+        if (this.oldValue.length && this.option.value.length) {
+          if (this.oldValue[this.oldValue.length - 1].value == this.option.value[this.option.value.length - 1].value) {
+            return null;
+          } else {
+            return {
+              oldValue: this.oldValue,
+              newValue: this.option.value
+            }
+          }
+        } else {
+          return null;
+        }
+      } else {
+        return {
+          oldValue: this.oldValue,
+          newValue: this.option.value
+        }
+      }
+    } else {
+      return null;
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit ,ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 
 import {
     NgdsDataGridOption, NgdsPanelOption,
@@ -10,13 +10,33 @@ import {
     NgdsFormConfig,
     NgdsFormOption, NgdsFormInput, NgdsFormRadio, NgdsFormCheckbox, NgdsFormSelect, NgdsFormDatePicker,
     NgdsFormUmeditor, NgdsFormUploader, NgdsFormCompOption,
-    NgdsForm, NgdsFormComp,NgdsDataGrid
+    NgdsForm, NgdsFormComp, NgdsDataGrid, NgdsDataGridColumnOption
 } from '../../../../../src/index';
 import { DatagridPropertyPipe, DatagridPropertyBadgePipe } from '../../shared/pipe/index';
+import { debug } from 'util';
 
 // pageSize: number; //每页个数
 // pageCount: number; //页面总数
 // pageIndex: number;//当前页数
+@Component({
+    template: `
+    <div>
+     {{item.username}}
+     <div>
+        自定义组件
+     </div>
+    </div>
+    `
+})
+export class DemoColumnComponent {
+    elRef: ElementRef
+    colOption: NgdsDataGridColumnOption;
+    item: any;
+
+    constructor(elRef: ElementRef) {
+        this.elRef = elRef;
+    }
+}
 
 class DemoDataSource implements NgdsDataSource {
     getData(params: any): Promise<NgdsDataGridModel> {
@@ -27,17 +47,32 @@ class DemoDataSource implements NgdsDataSource {
                     page: {
                         pageSize: 4,
                         pageCount: 10,
-                        totalCount:9
+                        totalCount: 9
                     },
                     data: [
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1, org: { name: 1 } },
-                        { username: "13999", name: "胡立波", mobile: "13333333331", authStatus: 0 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 0 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1 },
-                        { username: "13999", name: "胡立波", mobile: "13333333333", authStatus: 1 },
+                        {
+                            id: 1, username: "13999", name: "胡立波1", mobile: "13333333333", authStatus: 1, org: { name: 1 },
+                            showExpand: true,
+                            // children:[
+                            //     { id:9, username: "13999", name: "胡立波9", mobile: "13333333331", authStatus: 0 ,
+                            //     showExpand:true,
+                            //     children:[
+                            //         { id:12, username: "13999", name: "胡立波10", mobile: "13333333333", authStatus: 1 },
+                            //         { id:13, username: "13999", name: "胡立波11", mobile: "13333333333", authStatus: 1 },
+                            //     ]
+                            //     },
+                            //     { id:10, username: "13999", name: "胡立波10", mobile: "13333333333", authStatus: 1 },
+                            //     { id:11, username: "13999", name: "胡立波11", mobile: "13333333333", authStatus: 1 },
+
+                            // ]
+                        },
+                        { id: 2, username: "13999", name: "胡立波2", mobile: "13333333331", authStatus: 0, disableEdit: true },
+                        { id: 3, username: "13999", name: "胡立波3", mobile: "13333333333", authStatus: 1, disableEdit: true },
+                        { id: 4, username: "13999", name: "胡立波4", mobile: "13333333333", authStatus: 1, disableEdit: true },
+                        { id: 5, username: "13999", name: "胡立波5", mobile: "13333333333", authStatus: 0, disableEdit: true },
+                        { id: 6, username: "13999", name: "胡立波6", mobile: "13333333333", authStatus: 1, disableEdit: true },
+                        { id: 7, username: "13999", name: "胡立波7", mobile: "13333333333", authStatus: 1, disableEdit: true },
+                        { id: 8, username: "13999", name: "胡立波8", mobile: "13333333333", authStatus: 1, disableEdit: true },
                     ]
                 });
             }, 1000)
@@ -45,6 +80,41 @@ class DemoDataSource implements NgdsDataSource {
         });
     }
 }
+
+class ChildrenDataSource implements NgdsDataSource {
+    getData(params: any): Promise<NgdsModel> {
+        return new Promise<NgdsModel>((resolve, reject) => {
+            resolve([
+                { id: 9, username: "13999", name: "胡立波9", mobile: "13333333331", authStatus: 0, showExpand: true },
+                { id: 10, username: "13999", name: "胡立波10", mobile: "13333333333", authStatus: 1 },
+                { id: 11, username: "13999", name: "胡立波11", mobile: "13333333333", authStatus: 1 },
+            ]);
+        });
+    }
+}
+
+class Children2DataSource implements NgdsDataSource {
+    getData(params: any): Promise<NgdsModel> {
+        return new Promise<NgdsModel>((resolve, reject) => {
+            resolve([
+                { id: 12, username: "13999", name: "胡立波9", mobile: "13333333331", authStatus: 0 },
+                { id: 13, username: "13999", name: "胡立波10", mobile: "13333333333", authStatus: 1 },
+            ]);
+        });
+    }
+}
+
+class Children3DataSource implements NgdsDataSource {
+    getData(params: any): Promise<NgdsModel> {
+        return new Promise<NgdsModel>((resolve, reject) => {
+            resolve([
+                { id: 14, username: "13999", name: "胡立波9", mobile: "13333333331", authStatus: 0 },
+                { id: 15, username: "13999", name: "胡立波10", mobile: "13333333333", authStatus: 1 },
+            ]);
+        });
+    }
+}
+
 class AuthStatusDataSource implements NgdsDataSource {
     getData(params: any): Promise<NgdsModel> {
         return new Promise<NgdsModel>((resolve, reject) => {
@@ -61,8 +131,8 @@ class SexDataSource implements NgdsDataSource {
     getData(params: any): Promise<NgdsModel> {
         return new Promise<NgdsModel>((resolve, reject) => {
             resolve([
-                {label: "男", value: 1},
-                {label: "女", value: 2}
+                { label: "男", value: 1 },
+                { label: "女", value: 2 }
             ]);
         });
     }
@@ -71,10 +141,10 @@ class LikeDataSource implements NgdsDataSource {
     getData(params: any): Promise<NgdsModel> {
         return new Promise<NgdsModel>((resolve, reject) => {
             resolve([
-                {label: "游泳", value: 1},
-                {label: "下棋", value: 2},
-                {label: "编程", value: 3},
-                {label: "跑步", value: 4}
+                { label: "游泳", value: 1 },
+                { label: "下棋", value: 2 },
+                { label: "编程", value: 3 },
+                { label: "跑步", value: 4 }
             ]);
         });
     }
@@ -83,11 +153,11 @@ class SelectDataSource implements NgdsDataSource {
     getData(params: any): Promise<NgdsModel> {
         return new Promise<NgdsModel>((resolve, reject) => {
             resolve([
-                {label: "全部", value: ""},
-                {label: "杭州", value: 1},
-                {label: "宁波", value: 2},
-                {label: "温州", value: 3},
-                {label: "上海", value: 4}
+                { label: "全部", value: "" },
+                { label: "杭州", value: 1 },
+                { label: "宁波", value: 2 },
+                { label: "温州", value: 3 },
+                { label: "上海", value: 4 }
             ]);
         });
     }
@@ -107,9 +177,9 @@ export class DataGridComponent implements OnInit {
         private datagridPropertyBadgePipe: DatagridPropertyBadgePipe,
         private datagridDeepPropertyPipe: DatagridDeepPropertyPipe) {
     }
-    @ViewChild('myForm') myForm:NgdsForm;
-    @ViewChild('myTable') myTable:NgdsDataGrid;
-    
+    @ViewChild('myForm') myForm: NgdsForm;
+    @ViewChild('myTable') myTable: NgdsDataGrid;
+
     panelOption: NgdsPanelOption = {
         crumbs: [
             {
@@ -140,8 +210,10 @@ export class DataGridComponent implements OnInit {
     }
 
     formOption: NgdsFormOption = {
-        showSearch:true,
-        column:3,
+        id:"xxxxxxx",
+        showSearch: true,
+        column: 3,
+        remember:true,
         components: [
             [
                 {
@@ -149,7 +221,7 @@ export class DataGridComponent implements OnInit {
                 },
                 { label: '商品名称', property: "goodName", comp: NgdsFormInput, type: "password" }
             ],
-            
+
         ]
 
     }
@@ -157,23 +229,57 @@ export class DataGridComponent implements OnInit {
     option: NgdsDataGridOption = {
         dataSource: new DemoDataSource(),
         table: {
-            showCheck: false,
+            showCheck: true,
+            expandChange: (item: any, extend: any) => {
+                if (!item.children) {
+                    if (item.id == 1) {
+                        new ChildrenDataSource().getData(null).then((data: any) => {
+                            this.myTable.addNodeChildren(item, data);
+                        })
+                    } else if (item.id == 2) {
+                        new Children2DataSource().getData(null).then((data: any) => {
+                            this.myTable.addNodeChildren(item, data);
+                        })
+                    } else {
+                        new Children3DataSource().getData(null).then((data: any) => {
+                            this.myTable.addNodeChildren(item, data);
+                        })
+                    }
+                }
+
+            },
             columns: [
-                { text: '用户名', property: "username", width: "60px" },
-                { text: '姓名', property: "name", width: "80px" },
-                { text: '手机号', property: "mobile", width: "100px" },
+                {
+                    text: '用户名', property: "username", canEdit: true, editFinish: (item: any) => {
+                        this.option.table.columns[2].hidden = !this.option.table.columns[2].hidden;
+                    }
+                },
+                {
+                    text: '姓名', property: "name", click: (item: any) => {
+                        debugger
+                    }
+                },
+                { text: '手机号', property: "mobile", },
                 {
                     text: '认证状态',
                     property: "authStatus",
-                    propertyPipe: this.datagridPropertyPipe,
-                    badgePipe: (property: string,data:any):string=>{
-                        if(data[property]==1){
-                            return "success";                        
-                        }else{
-                            return "error";                        
+                    propertyPipe: (property: string, data: any): string => {
+                        if (data[property] == 1) {
+                            return "已经认证";
+                        } else {
+                            return "未认证";
                         }
                     },
-                    width: "130px"
+                    badgePipe: (property: string, data: any): string => {
+                        if (data[property] == 1) {
+                            return "success";
+                        } else {
+                            return "error";
+                        }
+                    },
+                    width: "130px",info:(property: string, data: any): string => {
+                        return "";
+                    }
                 },
                 {
                     text: '企业名称',
@@ -218,6 +324,7 @@ export class DataGridComponent implements OnInit {
                             {
                                 text: "老师管理",
                                 action: function (item) {
+                                    debugger
                                 }
                             },
                             {
@@ -255,12 +362,12 @@ export class DataGridComponent implements OnInit {
     ngOnInit() {
     }
 
-    tabSelect(data:any){
-        let value:any = this.myForm.getValue();
-        this.myTable.search({auth:data.value});
+    tabSelect(data: any) {
+        let value: any = this.myForm.getValue();
+        this.myTable.search({ auth: data.value });
     }
 
-    search(value:any){
+    search(value: any) {
         debugger
         this.myTable.search(value);
     }

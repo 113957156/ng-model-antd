@@ -24,21 +24,11 @@ import { NgdsModel } from '../core/datasource';
                 <label for="{{option.property}}">{{option.label}}</label>
             </div>
             <div nz-form-control nz-col [nzSpan]="option.compSpan" [nzValidateStatus]="getFormControl(option.property)">
-
-                <nz-datepicker style="width:45%" [formControl]="getFormControl(option.property)" 
-                [(ngModel)]="option.value.first"
-                (ngModelChange)="onChange()"
-                [nzSize]="'large'">
-                </nz-datepicker>
-
-                <span class="split-input">-</span>
-
-                <nz-datepicker style="width:45%" [formControl]="getFormControl(option.property2)" 
-                [(ngModel)]="option.value.second"
-                (ngModelChange)="onChange()"
-                [nzSize]="'large'">
-                </nz-datepicker>
-
+                <nz-rangepicker [(ngModel)]="option.value" 
+                (ngModelChange)="onChange()" 
+                [nzShowTime]="option.showTime"
+                [nzFormat]="option.showTime?option.format:'YYYY-MM-DD'"
+                [style.width.%]="100"></nz-rangepicker>
                 <div nz-form-explain *ngFor="let val of option.validations">
                     <span class="error-msg" *ngIf="getFormControl(option.property).errors&&
                     getFormControl(option.property).errors[val.type]">{{val.msg}}</span>
@@ -57,30 +47,67 @@ export class NgdsFormDatePickerRange extends NgdsFormComp implements AfterConten
 
     option: NgdsFormDatePickerCompOption;
     data: Array<any>;
+    oldValue: any;
 
     ngOnInit() {
-        if (!this.option.value) {
-            this.option.value = {};
-        }
     }
 
     ngAfterContentChecked() {
     }
 
-    onChange(value: any) {
+    setValue(value: any) {
         if (value !== undefined) {
             this.option.value = value;
         }
-        this.option.onChange && this.option.onChange(this.option);
+
+        if (this.oldValue == undefined) {
+            this.oldValue = value ? [value[0],value[1]] : null;
+        }
     }
 
-    setCompValue(formValue: any, compKey: string, compValue: any): void {
-        formValue[this.option.property] = this.option.value.first;
-        formValue[this.option.property2] = this.option.value.second;
+    onChange() {
+        if (this.option.validations) {
+            let formControl = this.option.formGroup.controls[this.option.property];
+            formControl.setErrors({});
+            for (let val of this.option.validations) {
+                if (val.type == "required") {
+                    if (this.option.value.length == 0) {
+                        let formControl = this.option.formGroup.controls[this.option.property];
+                        formControl.setErrors({ "required": true })
+                    }
+                }
+            }
+            if (formControl.errors && Object.keys(formControl.errors).length == 0) {
+                formControl.setErrors(null);
+            }
+        }
+        this.option.onChange && this.option.onChange(this.option);
     }
 
     getFormControl(name: string): any {
         return this.option.formGroup.controls[name];
     }
 
+    getChangeValue(): any {
+        if (this.oldValue || this.option.value) {
+            if (this.oldValue && this.option.value) {
+                if (this.option.value[0] == this.oldValue[0] &&
+                    this.option.value[1] == this.oldValue[1]) {
+                    return null;
+                } else {
+                    return {
+                        oldValue: this.oldValue,
+                        newValue: this.option.value
+                    }
+                }
+            } else {
+                return {
+                    oldValue: this.oldValue,
+                    newValue: this.option.value
+                }
+            }
+        } else {
+            return null;
+        }
+    }
 }

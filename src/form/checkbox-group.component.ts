@@ -29,7 +29,7 @@ import { NgdsFormComp } from './form.component';
                         {{group.title}}
                         </label>
                     </div>
-                    <nz-checkbox-group [(ngModel)]="group.children" (ngModelChange)="onChange()"></nz-checkbox-group>
+                    <nz-checkbox-group [(ngModel)]="group.children" (ngModelChange)="setValue();onChange()"></nz-checkbox-group>
                 </div>
                 <div nz-form-explain *ngFor="let val of option.validations">
                     <span class="error-msg" *ngIf="getFormControl(option.property).errors&&
@@ -49,6 +49,7 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
     data: Array<any>;
     indeterminate = true;
     allChecked: any = {};
+    oldValue: any;
 
     ngOnInit() {
         if (!this.option.dsLabel) {
@@ -64,13 +65,13 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
             for (let item of model.data) {
                 item.title = item[this.option.dsTitle];
                 for (let child of item.children) {
-                    item.label = item[this.option.dsLabel];
+                    child.label = child[this.option.dsLabel];
                     if (this.option.dsLabel != "label") {
-                        delete item[this.option.dsLabel];
+                        delete child[this.option.dsLabel];
                     }
-                    item.value = item[this.option.dsValue];
+                    child.value = child[this.option.dsValue];
                     if (this.option.dsValue != "value") {
-                        delete item[this.option.dsValue];
+                        delete child[this.option.dsValue];
                     }
                     if (this.option.value != undefined) {
                         if (this.option.value.indexOf(child.value) != -1) {
@@ -86,14 +87,16 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
     updateAllChecked(index: number): void {
         this.indeterminate = false;
         if (this.allChecked[index]) {
-            this.data[index].children.forEach((item:any) => item.checked = true);
+            this.data[index].children.forEach((item: any) => item.checked = true);
         } else {
-            this.data[index].children.forEach((item:any) => item.checked = false);
+            this.data[index].children.forEach((item: any) => item.checked = false);
         }
+        this.setValue(undefined);
+        this.onChange();
     }
 
-    onChange(value: any) {
-        if(value===undefined){
+    setValue(value: any) {
+        if (value === undefined) {
             this.option.value = [];
             for (let item of this.data) {
                 for (let child of item.children) {
@@ -102,14 +105,14 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
                     }
                 }
             }
-        }else{
-            this.option.value = value||[];
+        } else {
+            this.option.value = value || [];
             for (let item of this.data) {
                 for (let child of item.children) {
-                    if (this.option.value.indexOf(child.value)!=-1) {
+                    if (this.option.value.indexOf(child.value) != -1) {
                         child.checked = true;
-                    }else{
-                        child.checked = false;                    
+                    } else {
+                        child.checked = false;
                     }
                 }
             }
@@ -119,7 +122,6 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
         if (this.option.validations) {
             let formControl = this.option.formGroup.controls[this.option.property];
             formControl.setErrors({});
-
             for (let val of this.option.validations) {
                 if (val.type == "required") {
                     if (this.option.value.length == 0) {
@@ -128,7 +130,17 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
                     }
                 }
             }
+            if (formControl.errors && Object.keys(formControl.errors).length == 0) {
+                formControl.setErrors(null);
+            }
         }
+
+        if (this.oldValue == undefined) {
+            this.oldValue = value || null;
+        }
+    }
+
+    onChange() {
         this.option.onChange && this.option.onChange(this.option);
     }
 
@@ -137,5 +149,27 @@ export class NgdsFormCheckboxGroup extends NgdsFormComp implements AfterContentC
 
     getFormControl(name: string): any {
         return this.option.formGroup.controls[name];
+    }
+
+    getChangeValue(): any {
+        if (this.oldValue || this.option.value) {
+            if (this.oldValue && this.option.value) {
+                if (this.oldValue.every((e: any) => this.option.value.includes(e))) {
+                    return null;
+                } else {
+                    return {
+                        oldValue: this.oldValue,
+                        newValue: this.option.value
+                    }
+                }
+            } else {
+                return {
+                    oldValue: this.oldValue,
+                    newValue: this.option.value
+                }
+            }
+        } else {
+            return null;
+        }
     }
 }

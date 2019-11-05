@@ -47,11 +47,18 @@ export class NgdsFormInputRange extends NgdsFormComp implements AfterContentChec
   }
 
   option: NgdsFormInputRangeCompOption;
+  oldValue: any;
 
-  onChange(value: any) {
+  setValue(value: any) {
     if (value !== undefined) {
       this.option.value = value;
     }
+    if (this.oldValue == undefined) {
+      this.oldValue = value ? Object.assign({}, value) : null;
+    }
+  }
+
+  onChange() {
     this.option.onChange && this.option.onChange(this.option);
   }
 
@@ -62,8 +69,8 @@ export class NgdsFormInputRange extends NgdsFormComp implements AfterContentChec
   }
 
   setCompValue(formValue: any, compKey: string, compValue: any): void {
-    formValue[this.option.property] = this.option.value.first;
-    formValue[this.option.property2] = this.option.value.second;
+    formValue[this.option.property] = this.option.value && this.option.value.first;
+    formValue[this.option.property2] = this.option.value && this.option.value.second;
   }
 
   ngAfterContentChecked() {
@@ -73,4 +80,26 @@ export class NgdsFormInputRange extends NgdsFormComp implements AfterContentChec
     return this.option.formGroup.controls[name];
   }
 
+  getChangeValue(): any {
+    if (this.oldValue || this.option.value) {
+      if (this.oldValue && this.option.value) {
+        if (this.option.value.first == this.oldValue.first &&
+          this.option.value.second == this.oldValue.second) {
+          return null;
+        } else {
+          return {
+            oldValue: this.oldValue,
+            newValue: this.option.value
+          }
+        }
+      } else {
+        return {
+          oldValue: this.oldValue,
+          newValue: this.option.value
+        }
+      }
+    } else {
+      return null;
+    }
+  }
 }

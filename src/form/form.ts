@@ -14,6 +14,7 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 import { NgdsFormConfig, NgdsFormOption, NgdsFormCompOption } from './form.config';
 import { NgdsFormRow } from './row.component';
 import { NgdsFormSearchBar } from './search-bar.component';
+let hashPageMap: Map<number, any> = new Map();
 
 /**
  * A component that makes it easy to create tabbed interface.
@@ -38,11 +39,22 @@ export class NgdsForm implements AfterContentChecked {
     @Input() set option(o: NgdsFormOption) {
         this._option = o;
         this.refresh();
+        if (this._option.remember) {
+            this.hash = this.hash || this.hashCode(o.id || location.pathname);
+            let value = hashPageMap.get(this.hash);
+            this.setValue(value);
+        }
     }
     @Output() onSearch: EventEmitter<any> = new EventEmitter();
 
     myForm: FormGroup;
     compMap: any = {};
+    hash: number;
+
+    hashCode(source: string): number {
+        return source.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+    };
+
     ngOnInit() {
     }
 
@@ -94,6 +106,7 @@ export class NgdsForm implements AfterContentChecked {
                 if (this._option.value) {
                     compOption.value = this._option.value[compOption.property];
                 }
+                compOption.formOption = this._option;
             }
         }
         if (this._option.showSearch) {
@@ -118,20 +131,30 @@ export class NgdsForm implements AfterContentChecked {
 
             let searchFactory: ComponentFactory<any> = this.cfr.resolveComponentFactory(NgdsFormSearchBar);
             let comp: ComponentRef<any> = rowComp.instance.addCol(searchFactory);
-            let searchOption: any =  {
+            let searchOption: any = {
                 span: lastSpan ? (24 - lastSpan) : ~~24 / maxCol,
                 labelSpan: this._option.labelSpan,
                 compSpan: this._option.compSpan,
                 formComp: this,
-                offset: lastSpan?0:nzOffset
+                offset: lastSpan ? 0 : nzOffset
             };
-            Object.assign(searchOption,this._option.search);
+            Object.assign(searchOption, this._option.search);
             comp.instance.option = searchOption;
         }
     }
 
     checkVal(): boolean {
-        return this.myForm.valid;
+        if(this.myForm.valid){
+            return true;
+        }
+        for (var key in this.myForm.controls) {
+            if (!this.compMap[key].instance.option.hidden) {
+                if (this.myForm.controls[key].status !== 'VALID') {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     getValue(): any {
@@ -160,7 +183,37 @@ export class NgdsForm implements AfterContentChecked {
                 }
             }
         }
+        if (this._option.remember) {
+            hashPageMap.set(this.hash, this._option.value);
+        }
         return this._option.value;
+    }
+
+    getChangeValue() {
+        let chageData: any = {};
+        for (let rowComp of this._option.components) {
+            for (let compOption of rowComp) {
+                if (!compOption.hidden) {
+                    let propertyArray: Array<string> = compOption.property.split(".");
+                    let value: any = chageData;
+                    propertyArray.forEach((item: string, index: number) => {
+                        if (index == propertyArray.length - 1) {
+                            let txComp: any = this.compMap[compOption.property].instance;
+                            let chageValue = txComp.getChangeValue();
+                            if (chageValue != null) {
+                                value[item] = chageValue;
+                            }
+                        } else {
+                            if (!value[item]) {
+                                value[item] = {};
+                            }
+                            value = value[item];
+                        }
+                    })
+                }
+            }
+        }
+        return chageData;
     }
 
     getModelValue(property: string, data: any): any {
@@ -189,8 +242,16 @@ export class NgdsForm implements AfterContentChecked {
                     }
                 }
                 let txComp: any = this.compMap[compOption.property].instance;
-                if (txComp.onChange) {
-                    txComp.onChange(value == undefined ? null : value);
+                if (txComp.setValue) {
+                    txComp.setValue(value == undefined ? null : value);
+                }
+            }
+        }
+        for (let rowComp of this._option.components) {
+            for (let compOption of rowComp) {
+                let txComp: any = this.compMap[compOption.property].instance;
+                if (txComp.setValue) {
+                    txComp.onChange();
                 }
             }
         }
